@@ -1,0 +1,9 @@
+acpcmatrix
+acpc_to_standard_lin.mat
+*.nii.gz
+*.mat
+output/*
+inputs/*
+config.json
+*.txt
+*.cnf

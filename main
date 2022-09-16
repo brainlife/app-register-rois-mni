@@ -1,0 +1,8 @@
+#!/bin/bash
+#PBS -l nodes=1:ppn=1,walltime=4:30:00
+#PBS -N fsl_anat
+#PBS -l vmem=30gb
+#PBS -V
+
+time singularity exec -e docker://brainlife/fsl:5.0.11 ./run.sh
+
