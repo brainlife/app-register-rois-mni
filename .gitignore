@@ -7,3 +7,5 @@ inputs/*
 config.json
 *.txt
 *.cnf
+acpc/*
+standard_nonlin_warp/*
