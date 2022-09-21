@@ -137,7 +137,7 @@ if [ ! -f ${warp} ]; then
 
 	# other outputs
 	[ ! -f ${standard_nonlin_warp}/affine.txt ] &&  mv acpcmatrix ${standard_nonlin_warp}/affine.txt
-	[ ! -f ${outdir}/fnirt_config.cnf ] && mv *.nii.gz ${outdir}/ && mv fnirt_config.cnf ${outdir}/ && mv *.txt ${outdir}/ && mv *.mat ${outdir}/
+	#[ ! -f ${outdir}/fnirt_config.cnf ] && mv *.nii.gz ${outdir}/ && mv fnirt_config.cnf ${outdir}/ && mv *.txt ${outdir}/ && mv *.mat ${outdir}/
 else
 	[ ! -f ${standard_nonlin_warp}/inverse-warp.nii.gz ] && cp ${inv_warp} ./${standard_nonlin_warp}/inverse-warp.nii.gz
 	[ ! -f ${standard_nonlin_warp}/warp.nii.gz ] && cp ${warp} ./${standard_nonlin_warp}/warp.nii.gz
@@ -163,5 +163,5 @@ do
 done
 
 ## final check
-[ ! -f ${output}/${roi_files[0]} ] && echo "failed" || echo "passed"
+#[ ! -f ${output}/${roi_files[0]} ] && echo "failed" || echo "passed"
 # && exit 1 || exit 0
