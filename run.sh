@@ -163,4 +163,5 @@ do
 done
 
 ## final check
-# [ ! -f ${output}/${roi_files[0]} ] && echo "failed" && exit 1 || exit 0
+[ ! -f ${output}/${roi_files[0]} ] && echo "failed" || echo "passed"
+# && exit 1 || exit 0
