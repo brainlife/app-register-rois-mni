@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ## input parameters
-t2=`jq -r '.t2' config.json`
+t2=`jq -r '.input' config.json`
 rois=`jq -r '.rois' config.json`
 TEMPLATE=`jq -r '.template' config.json`
 input_type=`jq -r '.input_type' config.json`
