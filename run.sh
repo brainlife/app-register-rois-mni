@@ -130,18 +130,11 @@ if [ ! -f ${warp} ]; then
 		-w ${input_type}_to_standard_nonlin_coeff \
 		-o standard_to_${input_type}_nonlin_field
 
-	# moving warp fields from non-linear warp to warp directory
-	#[ ! -f ${standard_nonlin_warp}/inverse-warp.nii.gz ] && mv ./standard_to_${input_type}_nonlin_field.nii.gz ./${standard_nonlin_warp}/inverse-warp.nii.gz
-
-	#[ ! -f ${standard_nonlin_warp}/warp.nii.gz ] && mv ./${input_type}_to_standard_nonlin_field.nii.gz ./${standard_nonlin_warp}/warp.nii.gz
-
-	## other outputs
-	#[ ! -f ${standard_nonlin_warp}/affine.txt ] &&  mv acpcmatrix ${standard_nonlin_warp}/affine.txt
-	#[ ! -f ${outdir}/fnirt_config.cnf ] && mv *.nii.gz ${outdir}/ && mv fnirt_config.cnf ${outdir}/ && mv *.txt ${outdir}/ && mv *.mat ${outdir}/
 else
 	[ ! -f ${standard_nonlin_warp}/inverse-warp.nii.gz ] && cp ${inv_warp} ./${standard_nonlin_warp}/inverse-warp.nii.gz
 	[ ! -f ${standard_nonlin_warp}/warp.nii.gz ] && cp ${warp} ./${standard_nonlin_warp}/warp.nii.gz
 	[ ! -f ${standard_nonlin_warp}/affine.txt ] && cp ${affine} ./${standard_nonlin_warp}/affine.txt
+	[ ! -f ./acpc/${output_type}.nii.gz ] && mv ${output_type}_acpc.nii.gz ./acpc/${output_type}.nii.gz
 fi
 
 ## warp rois
