@@ -32,7 +32,7 @@ done
 
 
 ## if warp does not exist, perform alignment. else, just applywarp
-if [ -z ${warp} ]; then
+if [ ! -f ${warp} ]; then
 	## set template for alignment
 	case $TEMPLATE in
 	nihpd_asym*)
