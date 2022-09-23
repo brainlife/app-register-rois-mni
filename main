@@ -4,5 +4,8 @@
 #PBS -l vmem=30gb
 #PBS -V
 
+set -x
+set -e
+
 time singularity exec -e docker://brainlife/fsl:5.0.11 ./run.sh
 
