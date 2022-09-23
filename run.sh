@@ -30,7 +30,7 @@ done
 
 ## set if conditions
 [[ ${input_type} == 'T1' ]] && output_type='t1' || output_type='t2'
-[[ ${warp_to_use} == 'warp']] && warp_file="warp.nii.gz" || warp_file="inverse-warp.nii.gz"
+[[ ${warp_to_use} == 'warp' ]] && warp_file="warp.nii.gz" || warp_file="inverse-warp.nii.gz"
 
 ## set template for alignment
 case $TEMPLATE in
