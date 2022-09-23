@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 ## input parameters
 input=`jq -r '.input' config.json`
 rois=`jq -r '.rois' config.json`
