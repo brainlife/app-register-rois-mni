@@ -30,42 +30,42 @@ done
 ## set if conditions
 [[ ${input_type} == 'T1' ]] && output_type='t1' || output_type='t2'
 
+## set template for alignment
+case $TEMPLATE in
+nihpd_asym*)
+	space="NIHPD"
+	[ $input_type == "T1" ] && template=templates/${TEMPLATE}_t1w.nii
+	[ $input_type == "T2" ] && template=templates/${TEMPLATE}_t2w.nii
+	template_mask=templates/${template}_mask.nii
+	;;
+MNI152_1mm)
+	space="MNI152_1mm"
+	[ $input_type == "T1" ] && template=templates/MNI152_T1_1mm.nii.gz
+	[ $input_type == "T2" ] && template=templates/MNI152_T2_1mm.nii.gz
+	template_mask=templates/MNI152_T1_1mm_brain_mask.nii.gz
+	;;
+MNI152_0.7mm)
+	space="MNI152_0.7mm"
+	[ $input_type == "T1" ] && template=templates/MNI152_T1_0.7mm.nii.gz
+	[ $input_type == "T2" ] && template=templates/MNI152_T2_0.7mm.nii.gz
+	template_mask=templates/MNI152_T1_0.7mm_brain_mask.nii.gz
+	;;
+MNI152_0.8mm)
+	space="MNI152_0.8mm"
+	[ $input_type == "T1" ] && template=templates/MNI152_T1_0.8mm.nii.gz
+	[ $input_type == "T2" ] && template=templates/MNI152_T2_0.8mm.nii.gz
+	template_mask=templates/MNI152_T1_0.8mm_brain_mask.nii.gz
+	;;
+MNI152_2mm)
+	space="MNI152_2mm"
+	[ $input_type == "T1" ] && template=templates/MNI152_T1_2mm.nii.gz
+	[ $input_type == "T2" ] && template=templates/MNI152_T2_2mm.nii.gz
+	template_mask=templates/MNI152_T1_2mm_brain_mask_dil.nii.gz
+	;;
+esac
 
 ## if warp does not exist, perform alignment. else, just applywarp
 if [ ! -f ${warp} ]; then
-	## set template for alignment
-	case $TEMPLATE in
-	nihpd_asym*)
-		space="NIHPD"
-		[ $input_type == "T1" ] && template=templates/${TEMPLATE}_t1w.nii
-		[ $input_type == "T2" ] && template=templates/${TEMPLATE}_t2w.nii
-		template_mask=templates/${template}_mask.nii
-		;;
-	MNI152_1mm)
-		space="MNI152_1mm"
-		[ $input_type == "T1" ] && template=templates/MNI152_T1_1mm.nii.gz
-		[ $input_type == "T2" ] && template=templates/MNI152_T2_1mm.nii.gz
-		template_mask=templates/MNI152_T1_1mm_brain_mask.nii.gz
-		;;
-	MNI152_0.7mm)
-		space="MNI152_0.7mm"
-		[ $input_type == "T1" ] && template=templates/MNI152_T1_0.7mm.nii.gz
-		[ $input_type == "T2" ] && template=templates/MNI152_T2_0.7mm.nii.gz
-		template_mask=templates/MNI152_T1_0.7mm_brain_mask.nii.gz
-		;;
-	MNI152_0.8mm)
-		space="MNI152_0.8mm"
-		[ $input_type == "T1" ] && template=templates/MNI152_T1_0.8mm.nii.gz
-		[ $input_type == "T2" ] && template=templates/MNI152_T2_0.8mm.nii.gz
-		template_mask=templates/MNI152_T1_0.8mm_brain_mask.nii.gz
-		;;
-	MNI152_2mm)
-		space="MNI152_2mm"
-		[ $input_type == "T1" ] && template=templates/MNI152_T1_2mm.nii.gz
-		[ $input_type == "T2" ] && template=templates/MNI152_T2_2mm.nii.gz
-		template_mask=templates/MNI152_T1_2mm_brain_mask_dil.nii.gz
-		;;
-	esac
 
 	## make config file for fnirt
 	cp -v ./templates/fnirt_config.cnf ./
