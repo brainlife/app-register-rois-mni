@@ -131,11 +131,15 @@ if [ ! -f ${warp} ]; then
 		-o standard_to_${input_type}_nonlin_field
 
 	[ ! -f ./acpc/${output_type}.nii.gz ] && mv ${output_type}_acpc.nii.gz ./acpc/${output_type}.nii.gz
+	
+	warp=${input_type}_to_standard_nonlin_field.nii.gz
 else
 	[ ! -f ${standard_nonlin_warp}/inverse-warp.nii.gz ] && cp ${inv_warp} ./${standard_nonlin_warp}/inverse-warp.nii.gz
 	[ ! -f ${standard_nonlin_warp}/warp.nii.gz ] && cp ${warp} ./${standard_nonlin_warp}/warp.nii.gz
 	[ ! -f ${standard_nonlin_warp}/affine.txt ] && cp ${affine} ./${standard_nonlin_warp}/affine.txt
 	[ ! -f ./acpc/${output_type}.nii.gz ] && cp ${input} ./acpc/${output_type}.nii.gz
+	
+	warp=${standard_nonlin_warp}/warp.nii.gz 
 fi
 
 ## warp rois
@@ -148,7 +152,7 @@ do
 			--interp=${interp} \
 			-i ${rois}/${i} \
 			-r ${template} \
-			-w ${input_type}_to_standard_nonlin_field \
+			-w ${warp} \
 			-o ${output}/${i}
 
 		echo "binarize and fill holes"
