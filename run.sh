@@ -64,7 +64,7 @@ MNI152_2mm)
 	space="MNI152_2mm"
 	[ $input_type == "T1" ] && template=templates/MNI152_T1_2mm.nii.gz
 	[ $input_type == "T2" ] && template=templates/MNI152_T2_2mm.nii.gz
-	template_mask=templates/MNI152_T1_2mm_brain_mask_dil.nii.gz
+	template_mask=templates/MNI152_T1_2mm_brain_mask.nii.gz
 	;;
 esac
 
