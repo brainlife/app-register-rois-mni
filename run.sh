@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ## input parameters
-t2=`jq -r '.input' config.json`
+input=`jq -r '.input' config.json`
 rois=`jq -r '.rois' config.json`
 TEMPLATE=`jq -r '.template' config.json`
 input_type=`jq -r '.input_type' config.json`
@@ -75,7 +75,7 @@ if [ ! -f ${warp} ]; then
 	## align input to template of choice
 	# flirt
 	[ ! -f ${input_type}_to_standard_lin.nii.gz ] && echo  "flirt linear alignment" && flirt -interp spline \
-		-dof 12 -in ${t2} \
+		-dof 12 -in ${input} \
 		-ref ${template} \
 		-omat ${input_type}_to_standard_lin.mat \
 		-out ${input_type}_to_standard_lin \
@@ -91,7 +91,7 @@ if [ ! -f ${warp} ]; then
 	# applying rigid transform to bias corrected image
 	[ ! -f ./${acpcdir}/${output_type}.nii.gz ] && applywarp --rel \
 		--interp=spline \
-		-i ${t2} \
+		-i ${input} \
 		-r ${template} \
 		--premat=acpcmatrix \
 		-o ./${output_type}_acpc.nii.gz
