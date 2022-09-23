@@ -132,11 +132,20 @@ if [ ! -f ${warp} ]; then
 
 	[ ! -f ./acpc/${output_type}.nii.gz ] && mv ${output_type}_acpc.nii.gz ./acpc/${output_type}.nii.gz
 	
-	warp=${input_type}_to_standard_nonlin_field.nii.gz
+	# moving warp fields from non-linear warp to warp directory
+	[ ! -f ${standard_nonlin_warp}/inverse-warp.nii.gz ] && mv ./standard_to_${input_type}_nonlin_field.nii.gz ${standard_nonlin_warp}/inverse-warp.nii.gz
+
+	[ ! -f ${standard_nonlin_warp}/warp.nii.gz ] && mv ./${input_type}_to_standard_nonlin_field.nii.gz ${standard_nonlin_warp}/warp.nii.gz
+
+	# other outputs
+	[ ! -f ${standard_nonlin_warp}/affine.txt ] &&  mv acpcmatrix ${standard_nonlin_warp}/affine.txt
+	[ ! -f ${outdir}/fnirt_config.cnf ] && mv *.nii.gz ${outdir}/ && mv fnirt_config.cnf ${outdir}/ && mv *.txt ${outdir}/ && mv *.mat ${outdir}/
+
+	warp=${standard_nonlin_warp}/warp.nii.gz
 else
-	[ ! -f ${standard_nonlin_warp}/inverse-warp.nii.gz ] && cp ${inv_warp} ./${standard_nonlin_warp}/inverse-warp.nii.gz
-	[ ! -f ${standard_nonlin_warp}/warp.nii.gz ] && cp ${warp} ./${standard_nonlin_warp}/warp.nii.gz
-	[ ! -f ${standard_nonlin_warp}/affine.txt ] && cp ${affine} ./${standard_nonlin_warp}/affine.txt
+	[ ! -f ${standard_nonlin_warp}/inverse-warp.nii.gz ] && cp ${inv_warp} ${standard_nonlin_warp}/inverse-warp.nii.gz
+	[ ! -f ${standard_nonlin_warp}/warp.nii.gz ] && cp ${warp} ${standard_nonlin_warp}/warp.nii.gz
+	[ ! -f ${standard_nonlin_warp}/affine.txt ] && cp ${affine} ${standard_nonlin_warp}/affine.txt
 	[ ! -f ./acpc/${output_type}.nii.gz ] && cp ${input} ./acpc/${output_type}.nii.gz
 	
 	warp=${standard_nonlin_warp}/warp.nii.gz 
@@ -159,16 +168,6 @@ do
 		fslmaths ${output}/${i} -bin -fillh ${output}/${i}
 	fi
 done
-
-
-# moving warp fields from non-linear warp to warp directory
-[ ! -f ${standard_nonlin_warp}/inverse-warp.nii.gz ] && mv ./standard_to_${input_type}_nonlin_field.nii.gz ./${standard_nonlin_warp}/inverse-warp.nii.gz
-
-[ ! -f ${standard_nonlin_warp}/warp.nii.gz ] && mv ./${input_type}_to_standard_nonlin_field.nii.gz ./${standard_nonlin_warp}/warp.nii.gz
-
-# other outputs
-[ ! -f ${standard_nonlin_warp}/affine.txt ] &&  mv acpcmatrix ${standard_nonlin_warp}/affine.txt
-[ ! -f ${outdir}/fnirt_config.cnf ] && mv *.nii.gz ${outdir}/ && mv fnirt_config.cnf ${outdir}/ && mv *.txt ${outdir}/ && mv *.mat ${outdir}/
 
 ## final check
 [ ! -f ${output}/${roi_files[0]} ] && echo "failed" || echo "passed"
