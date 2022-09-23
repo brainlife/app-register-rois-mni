@@ -147,9 +147,6 @@ else
 	[ ! -f ./acpc/${output_type}.nii.gz ] && cp ${input} ./acpc/${output_type}.nii.gz
 fi
 
-warp=${standard_nonlin_warp}/warp.nii.gz 
-
-
 ## warp rois
 echo "apply fnirt warp"
 for i in ${roi_files[*]}
@@ -160,7 +157,7 @@ do
 			--interp=${interp} \
 			-i ${rois}/${i} \
 			-r ${template} \
-			-w ${warp} \
+			-w ${standard_nonlin_warp}/warp.nii.gz \
 			-o ${output}/${i}
 
 		echo "binarize and fill holes"
