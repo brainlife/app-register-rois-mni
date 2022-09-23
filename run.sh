@@ -140,16 +140,15 @@ if [ ! -f ${warp} ]; then
 	# other outputs
 	[ ! -f ${standard_nonlin_warp}/affine.txt ] &&  mv acpcmatrix ${standard_nonlin_warp}/affine.txt
 	[ ! -f ${outdir}/fnirt_config.cnf ] && mv *.nii.gz ${outdir}/ && mv fnirt_config.cnf ${outdir}/ && mv *.txt ${outdir}/ && mv *.mat ${outdir}/
-
-	warp=${standard_nonlin_warp}/warp.nii.gz
 else
 	[ ! -f ${standard_nonlin_warp}/inverse-warp.nii.gz ] && cp ${inv_warp} ${standard_nonlin_warp}/inverse-warp.nii.gz
 	[ ! -f ${standard_nonlin_warp}/warp.nii.gz ] && cp ${warp} ${standard_nonlin_warp}/warp.nii.gz
 	[ ! -f ${standard_nonlin_warp}/affine.txt ] && cp ${affine} ${standard_nonlin_warp}/affine.txt
 	[ ! -f ./acpc/${output_type}.nii.gz ] && cp ${input} ./acpc/${output_type}.nii.gz
-	
-	warp=${standard_nonlin_warp}/warp.nii.gz 
 fi
+
+warp=${standard_nonlin_warp}/warp.nii.gz 
+
 
 ## warp rois
 echo "apply fnirt warp"
