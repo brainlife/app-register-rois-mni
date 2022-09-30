@@ -20,7 +20,7 @@ outdir='raw'
 
 ## make output directories
 [ ! -d output ] && mkdir output output/rois
-output='./output/rois/'
+output='./rois/rois/'
 
 [ ! -d ${outdir} ] && mkdir ${outdir}
 
