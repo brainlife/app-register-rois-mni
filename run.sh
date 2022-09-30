@@ -32,7 +32,7 @@ done
 
 ## set if conditions
 [[ ${input_type} == 'T1' ]] && output_type='t1' || output_type='t2'
-[[ ${warp_to_use} == 'warp' ]] && warp_file="warp.nii.gz" && premat_line='--premat=$affine' || warp_file="inverse-warp.nii.gz" && premat_line=''
+[[ ${warp_to_use} == 'warp' ]] && warp_file="warp.nii.gz" && premat_line="--premat $(eval "echo $affine")" || warp_file="inverse-warp.nii.gz" && premat_line=''
 
 ## set template for alignment
 case $TEMPLATE in
