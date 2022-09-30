@@ -19,7 +19,7 @@ warp_to_use=`jq -r '.warp_to_use' config.json`
 outdir='raw'
 
 ## make output directories
-[ ! -d output ] && mkdir output output/rois
+[ ! -d rois ] && mkdir rois rois/rois
 output='./rois/rois/'
 
 [ ! -d ${outdir} ] && mkdir ${outdir}
