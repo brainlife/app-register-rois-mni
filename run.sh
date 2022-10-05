@@ -34,7 +34,7 @@ done
 [[ ${input_type} == 'T1' ]] && output_type='t1' || output_type='t2'
 if [[ ${warp_to_use} == 'warp' ]]; then
 	warp_file="warp.nii.gz"
-	premat_line="--premat=$(eval "echo $affine")"
+	#premat_line="--premat=$(eval "echo $affine")"
 else
 	warp_file="inverse-warp.nii.gz"
 	premat_line=''
@@ -150,6 +150,9 @@ if [ ! -f ${warp} ]; then
 	# other outputs
 	[ ! -f ${standard_nonlin_warp}/affine.txt ] &&  mv acpcmatrix ${standard_nonlin_warp}/affine.txt
 	[ ! -f ${outdir}/fnirt_config.cnf ] && mv *.nii.gz ${outdir}/ && mv fnirt_config.cnf ${outdir}/ && mv *.txt ${outdir}/ && mv *.mat ${outdir}/
+	
+	affine=${standard_nonlin_warp}/affine.txt
+	premat_line="--premat=$(eval "echo $affine")"
 else
 	[ ! -f ${standard_nonlin_warp}/inverse-warp.nii.gz ] && cp ${inv_warp} ${standard_nonlin_warp}/inverse-warp.nii.gz
 	[ ! -f ${standard_nonlin_warp}/warp.nii.gz ] && cp ${warp} ${standard_nonlin_warp}/warp.nii.gz
