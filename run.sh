@@ -77,6 +77,20 @@ esac
 ## if warp does not exist, perform alignment. else, just applywarp
 if [ ! -f ${warp} ]; then
 
+	[[ ${reorient} ==  true ]] && fslreorient2std -m reorient.txt ${input} ${output_type}_reorient && input=${output_type}_reorient
+	[[ ${crop} == true ]] && robustfov -i ${input} -m crop.txt -r ${output_type}_crop && convert_xfm -omat inverse_crop.txt -inverse crop.txt && input=${output_type}_crop
+	
+	if [[ ${reorient} == true ]] && [[ ${crop} == false ]]; then
+		flirt_transform="reorient.txt"
+	elif [[ ${reorient} == false ]] && [[ ${crop} == true ]]; then
+		flirt_transform="inverse_crop.txt"
+	elif [[ ${reorient} == true ]] && [[ ${crop} == true ]]; then
+		convert_xfm -omat reorient_crop.txt -concat inverse_crop.txt reorient.txt
+		flirt_transform="reorient_crop.txt"
+	else
+		flirt_transform=""
+	fi
+
 	## make config file for fnirt
 	cp -v ./templates/fnirt_config.cnf ./
 	sed -i "/--ref=/s/$/${TEMPLATE}/" ./fnirt_config.cnf
@@ -164,11 +178,19 @@ fi
 echo "apply fnirt warp"
 for i in ${roi_files[*]}
 do
+    # apply crop and reorient transform if necessary
+    if [ ! -z ${flirt_transform} ]; then
+    	flirt -in ${rois}/${i} -ref ${input} -applyxfm -interp nearestneighbour -init ${flirt_transform} -out ./roi_${i}.nii.gz
+	roi_to_warp=./roi_${i}.nii.gz
+    else
+    	roi_to_warp=${rois}/${i}.nii.gz
+    fi
+    
     if [ ! -f ${output}/${i} ]; then
 		applywarp \
 			--rel \
 			--interp=${interp} \
-			-i ${rois}/${i} \
+			-i ${roi_to_warp} \
 			-r ${template} \
 			${premat_line} \
 			-w ${standard_nonlin_warp}/${warp_file} \
