@@ -16,6 +16,8 @@ tempdir='tmp'
 acpcdir='acpc'
 standard_nonlin_warp='standard_nonlin_warp'
 warp_to_use=`jq -r '.warp_to_use' config.json`
+crop=`jq -r '.crop' config.json`
+reorient=`jq -r '.reorient' config.json`
 outdir='raw'
 
 ## make output directories
