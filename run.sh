@@ -79,7 +79,7 @@ esac
 ## if warp does not exist, perform alignment. else, just applywarp
 if [ ! -f ${warp} ]; then
 
-	[[ ${reorient} ==  true ]] && fslreorient2std -m reorient.txt ${input} ${output_type}_reorient && input=${output_type}_reorient
+	[[ ${reorient} ==  true ]] && fslreorient2std ${input} -m reorient.txt ${output_type}_reorient && input=${output_type}_reorient
 	[[ ${crop} == true ]] && robustfov -i ${input} -m crop.txt -r ${output_type}_crop && convert_xfm -omat inverse_crop.txt -inverse crop.txt && input=${output_type}_crop
 	
 	if [[ ${reorient} == true ]] && [[ ${crop} == false ]]; then
