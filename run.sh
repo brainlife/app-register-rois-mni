@@ -109,7 +109,7 @@ if [ ! -f ${warp} ]; then
 
 	## acpc align input
 	# creating a rigid transform from linear alignment to MNI
-	[ ! -f acpcmatrix ] && echo  "acpc alignment" && python3.7 \
+	[ ! -f acpcmatrix ] && echo  "acpc alignment" && python \
 		./aff2rigid.py \
 		./${input_type}_to_standard_lin.mat \
 		acpcmatrix
