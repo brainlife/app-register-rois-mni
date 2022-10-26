@@ -16,11 +16,13 @@ tempdir='tmp'
 acpcdir='acpc'
 standard_nonlin_warp='standard_nonlin_warp'
 warp_to_use=`jq -r '.warp_to_use' config.json`
+crop=`jq -r '.crop' config.json`
+reorient=`jq -r '.reorient' config.json`
 outdir='raw'
 
 ## make output directories
-[ ! -d output ] && mkdir output output/rois
-output='./output/rois/'
+[ ! -d rois ] && mkdir rois rois/rois
+output='./rois/rois/'
 
 [ ! -d ${outdir} ] && mkdir ${outdir}
 
@@ -32,7 +34,13 @@ done
 
 ## set if conditions
 [[ ${input_type} == 'T1' ]] && output_type='t1' || output_type='t2'
-[[ ${warp_to_use} == 'warp' ]] && warp_file="warp.nii.gz" || warp_file="inverse-warp.nii.gz"
+if [[ ${warp_to_use} == 'warp' ]]; then
+	warp_file="warp.nii.gz"
+	#premat_line="--premat=$(eval "echo $affine")"
+else
+	warp_file="inverse-warp.nii.gz"
+	premat_line=''
+fi
 
 ## set template for alignment
 case $TEMPLATE in
@@ -71,6 +79,20 @@ esac
 ## if warp does not exist, perform alignment. else, just applywarp
 if [ ! -f ${warp} ]; then
 
+	[[ ${reorient} ==  true ]] && fslreorient2std -m reorient.txt ${input} ./${output_type}_reorient.nii.gz && input=./${output_type}_reorient.nii.gz
+	[[ ${crop} == true ]] && robustfov -i ${input} -m crop.txt -r ${output_type}_crop && convert_xfm -omat inverse_crop.txt -inverse crop.txt && input=./${output_type}_crop.nii.gz
+	
+	if [[ ${reorient} == true ]] && [[ ${crop} == false ]]; then
+		flirt_transform="reorient.txt"
+	elif [[ ${reorient} == false ]] && [[ ${crop} == true ]]; then
+		flirt_transform="inverse_crop.txt"
+	elif [[ ${reorient} == true ]] && [[ ${crop} == true ]]; then
+		convert_xfm -omat reorient_crop.txt -concat inverse_crop.txt reorient.txt
+		flirt_transform="reorient_crop.txt"
+	else
+		flirt_transform=""
+	fi
+
 	## make config file for fnirt
 	cp -v ./templates/fnirt_config.cnf ./
 	sed -i "/--ref=/s/$/${TEMPLATE}/" ./fnirt_config.cnf
@@ -87,7 +109,7 @@ if [ ! -f ${warp} ]; then
 
 	## acpc align input
 	# creating a rigid transform from linear alignment to MNI
-	[ ! -f acpcmatrix ] && echo  "acpc alignment" && python3.7 \
+	[ ! -f acpcmatrix ] && echo  "acpc alignment" && python \
 		./aff2rigid.py \
 		./${input_type}_to_standard_lin.mat \
 		acpcmatrix
@@ -143,7 +165,9 @@ if [ ! -f ${warp} ]; then
 
 	# other outputs
 	[ ! -f ${standard_nonlin_warp}/affine.txt ] &&  mv acpcmatrix ${standard_nonlin_warp}/affine.txt
-	[ ! -f ${outdir}/fnirt_config.cnf ] && mv *.nii.gz ${outdir}/ && mv fnirt_config.cnf ${outdir}/ && mv *.txt ${outdir}/ && mv *.mat ${outdir}/
+	
+	affine=${standard_nonlin_warp}/affine.txt
+	premat_line="--premat=$(eval "echo $affine")"
 else
 	[ ! -f ${standard_nonlin_warp}/inverse-warp.nii.gz ] && cp ${inv_warp} ${standard_nonlin_warp}/inverse-warp.nii.gz
 	[ ! -f ${standard_nonlin_warp}/warp.nii.gz ] && cp ${warp} ${standard_nonlin_warp}/warp.nii.gz
@@ -155,12 +179,21 @@ fi
 echo "apply fnirt warp"
 for i in ${roi_files[*]}
 do
+    # apply crop and reorient transform if necessary
+    if [ ! -z ${flirt_transform} ]; then
+    	flirt -in ${rois}/${i} -ref ${input} -applyxfm -interp nearestneighbour -init ${flirt_transform} -out ./roi_${i}
+	roi_to_warp=./roi_${i}
+    else
+    	roi_to_warp=${rois}/${i}
+    fi
+    
     if [ ! -f ${output}/${i} ]; then
 		applywarp \
 			--rel \
 			--interp=${interp} \
-			-i ${rois}/${i} \
+			-i ${roi_to_warp} \
 			-r ${template} \
+			${premat_line} \
 			-w ${standard_nonlin_warp}/${warp_file} \
 			-o ${output}/${i}
 
@@ -170,5 +203,5 @@ do
 done
 
 ## final check
-[ ! -f ${output}/${roi_files[0]} ] && echo "failed" || echo "passed"
-# && exit 1 || exit 0
+[ ! -f ${output}/${roi_files[0]} ] && echo "failed" && exit 1 || echo "passed" && mv *.nii.gz ${outdir}/ && mv fnirt_config.cnf ${outdir}/ && mv *.txt ${outdir}/ && mv *.mat ${outdir}/
+
