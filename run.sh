@@ -165,7 +165,6 @@ if [ ! -f ${warp} ]; then
 
 	# other outputs
 	[ ! -f ${standard_nonlin_warp}/affine.txt ] &&  mv acpcmatrix ${standard_nonlin_warp}/affine.txt
-	[ ! -f ${outdir}/fnirt_config.cnf ] && mv fnirt_config.cnf ${outdir}/ && mv *.txt ${outdir}/ && mv *.mat ${outdir}/
 	
 	affine=${standard_nonlin_warp}/affine.txt
 	premat_line="--premat=$(eval "echo $affine")"
@@ -205,4 +204,5 @@ done
 
 ## final check
 [ ! -f ${output}/${roi_files[0]} ] && echo "failed" || echo "passed"
-# && exit 1 || exit 0 && echo "passed" && mv *.nii.gz ${outdir}/
+# && exit 1 || exit 0 && echo "passed" && mv *.nii.gz ${outdir}/ && mv fnirt_config.cnf ${outdir}/ && mv *.txt ${outdir}/ && mv *.mat ${outdir}/
+
