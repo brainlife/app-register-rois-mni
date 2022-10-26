@@ -182,10 +182,10 @@ for i in ${roi_files[*]}
 do
     # apply crop and reorient transform if necessary
     if [ ! -z ${flirt_transform} ]; then
-    	flirt -in ${rois}/${i} -ref ${input} -applyxfm -interp nearestneighbour -init ${flirt_transform} -out ./roi_${i}.nii.gz
-	roi_to_warp=./roi_${i}.nii.gz
+    	flirt -in ${rois}/${i} -ref ${input} -applyxfm -interp nearestneighbour -init ${flirt_transform} -out ./roi_${i}
+	roi_to_warp=./roi_${i}
     else
-    	roi_to_warp=${rois}/${i}.nii.gz
+    	roi_to_warp=${rois}/${i}
     fi
     
     if [ ! -f ${output}/${i} ]; then
