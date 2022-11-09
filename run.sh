@@ -204,5 +204,9 @@ done
 
 ## final check
 [ ! -f ${output}/${roi_files[0]} ] && echo "failed" && exit 1 || echo "passed"
-[ -f fnirt_config.cnf ] && mv *.nii.gz ${outdir}/ && mv fnirt_config.cnf ${outdir}/ && mv *.txt ${outdir}/ && mv *.mat ${outdir}/
-
+if [ -f ./fnirt_config.cnf ]; then
+	mv *.nii.gz ${outdir}/
+	mv fnirt_config.cnf ${outdir}/
+	mv *.txt ${outdir}/
+	mv *.mat ${outdir}/
+fi
