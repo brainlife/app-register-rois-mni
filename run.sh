@@ -16,9 +16,8 @@ tempdir='tmp'
 acpcdir='acpc'
 standard_nonlin_warp='standard_nonlin_warp'
 warp_to_use=`jq -r '.warp_to_use' config.json`
-crop=`jq -r '.crop' config.json`
-reorient=`jq -r '.reorient' config.json`
 binarize=`jq -r '.binarize' config.json`
+acpc_or_input=`jq -r '.acpc_or_input' config.json`
 outdir='raw'
 
 ## make output directories
@@ -36,11 +35,15 @@ done
 ## set if conditions
 [[ ${input_type} == 'T1' ]] && output_type='t1' || output_type='t2'
 if [[ ${warp_to_use} == 'warp' ]]; then
-	warp_file="warp.nii.gz"
-	#premat_line="--premat=$(eval "echo $affine")"
+	warp_file=${warp}
+	premat_line="--premat=$(eval "echo $affine")"
 else
-	warp_file="inverse-warp.nii.gz"
-	premat_line=''
+	warp_file=${inv_warp}
+	if [[ ${acpc_or_input} == 'input' ]]; then
+		premat_line="--premat=$(eval "echo $affine")"
+	else
+		premat_line=''
+	fi
 fi
 
 ## set template for alignment
@@ -77,116 +80,11 @@ MNI152_2mm)
 	;;
 esac
 
-## if warp does not exist, perform alignment. else, just applywarp
-if [ ! -f ${warp} ]; then
-
-	[[ ${reorient} ==  true ]] && fslreorient2std -m reorient.txt ${input} ./${output_type}_reorient.nii.gz && input=./${output_type}_reorient.nii.gz
-	[[ ${crop} == true ]] && robustfov -i ${input} -m crop.txt -r ${output_type}_crop && convert_xfm -omat inverse_crop.txt -inverse crop.txt && input=./${output_type}_crop.nii.gz
-	
-	if [[ ${reorient} == true ]] && [[ ${crop} == false ]]; then
-		flirt_transform="reorient.txt"
-	elif [[ ${reorient} == false ]] && [[ ${crop} == true ]]; then
-		flirt_transform="inverse_crop.txt"
-	elif [[ ${reorient} == true ]] && [[ ${crop} == true ]]; then
-		convert_xfm -omat reorient_crop.txt -concat inverse_crop.txt reorient.txt
-		flirt_transform="reorient_crop.txt"
-	else
-		flirt_transform=""
-	fi
-
-	## make config file for fnirt
-	cp -v ./templates/fnirt_config.cnf ./
-	sed -i "/--ref=/s/$/${TEMPLATE}/" ./fnirt_config.cnf
-	sed -i "/--refmask=/s/$/${TEMPLATE}_mask_dil1/" ./fnirt_config.cnf
-
-	## align input to template of choice
-	# flirt
-	[ ! -f ${input_type}_to_standard_lin.nii.gz ] && echo  "flirt linear alignment" && flirt -interp spline \
-		-dof 12 -in ${input} \
-		-ref ${template} \
-		-omat ${input_type}_to_standard_lin.mat \
-		-out ${input_type}_to_standard_lin \
-		-searchrx -30 30 -searchry -30 30 -searchrz -30 30
-
-	## acpc align input
-	# creating a rigid transform from linear alignment to MNI
-	[ ! -f acpcmatrix ] && echo  "acpc alignment" && python \
-		./aff2rigid.py \
-		./${input_type}_to_standard_lin.mat \
-		acpcmatrix
-
-	# applying rigid transform to bias corrected image
-	[ ! -f ./${acpcdir}/${output_type}.nii.gz ] && applywarp --rel \
-		--interp=spline \
-		-i ${input} \
-		-r ${template} \
-		--premat=acpcmatrix \
-		-o ./${output_type}_acpc.nii.gz
-
-	# dilate and fill holes in template brain mask
-	[ ! -f ${TEMPLATE}_mask_dil1.nii.gz ] && fslmaths \
-		${template_mask} \
-		-fillh \
-		-dilF ${TEMPLATE}_mask_dil1
-
-	# flirt again
-	[ ! -f acpc_to_standard_lin.mat ] && echo "acpc to MNI linear flirt" && flirt \
-		-interp spline \
-		-dof 12 \
-		-in ./${output_type}_acpc.nii.gz \
-		-ref ${template} \
-		-omat acpc_to_standard_lin.mat \
-		-out acpc_to_standard_lin
-
-	# fnirt
-	[ ! -f ./${input_type}_to_standard_nonlin.nii.gz ] && echo  "fnirt nonlinear alignment" && fnirt \
-		--in=./${output_type}_acpc.nii.gz \
-		--ref=${template} \
-		--fout=${input_type}_to_standard_nonlin_field \
-		--jout=${input_type}_to_standard_nonlin_jac \
-		--iout=${input_type}_to_standard_nonlin \
-		--logout=${input_type}_to_standard_nonlin.txt \
-		--cout=${input_type}_to_standard_nonlin_coeff \
-		--config=./fnirt_config.cnf \
-		--aff=acpc_to_standard_lin.mat \
-		--refmask=${TEMPLATE}_mask_dil1.nii.gz
-
-	# compute inverse warp
-	[ ! -f ./standard_to_${input_type}_nonlin_field.nii.gz ] && echo  "compute inverse warp" && invwarp \
-		-r ${template} \
-		-w ${input_type}_to_standard_nonlin_coeff \
-		-o standard_to_${input_type}_nonlin_field
-
-	[ ! -f ./acpc/${output_type}.nii.gz ] && mv ${output_type}_acpc.nii.gz ./acpc/${output_type}.nii.gz
-	
-	# moving warp fields from non-linear warp to warp directory
-	[ ! -f ${standard_nonlin_warp}/inverse-warp.nii.gz ] && mv ./standard_to_${input_type}_nonlin_field.nii.gz ${standard_nonlin_warp}/inverse-warp.nii.gz
-
-	[ ! -f ${standard_nonlin_warp}/warp.nii.gz ] && mv ./${input_type}_to_standard_nonlin_field.nii.gz ${standard_nonlin_warp}/warp.nii.gz
-
-	# other outputs
-	[ ! -f ${standard_nonlin_warp}/affine.txt ] &&  mv acpcmatrix ${standard_nonlin_warp}/affine.txt
-	
-	affine=${standard_nonlin_warp}/affine.txt
-	premat_line="--premat=$(eval "echo $affine")"
-else
-	[ ! -f ${standard_nonlin_warp}/inverse-warp.nii.gz ] && cp ${inv_warp} ${standard_nonlin_warp}/inverse-warp.nii.gz
-	[ ! -f ${standard_nonlin_warp}/warp.nii.gz ] && cp ${warp} ${standard_nonlin_warp}/warp.nii.gz
-	[ ! -f ${standard_nonlin_warp}/affine.txt ] && cp ${affine} ${standard_nonlin_warp}/affine.txt
-	[ ! -f ./acpc/${output_type}.nii.gz ] && cp ${input} ./acpc/${output_type}.nii.gz
-fi
-
 ## warp rois
 echo "apply fnirt warp"
 for i in ${roi_files[*]}
 do
-    # apply crop and reorient transform if necessary
-    if [ ! -z ${flirt_transform} ]; then
-    	flirt -in ${rois}/${i} -ref ${input} -applyxfm -interp nearestneighbour -init ${flirt_transform} -out ./roi_${i}
-	roi_to_warp=./roi_${i}
-    else
-    	roi_to_warp=${rois}/${i}
-    fi
+	roi_to_warp=${rois}/${i}
     
     if [ ! -f ${output}/${i} ]; then
 		applywarp \
@@ -195,13 +93,13 @@ do
 			-i ${roi_to_warp} \
 			-r ${template} \
 			${premat_line} \
-			-w ${standard_nonlin_warp}/${warp_file} \
+			-w ${warp_file} \
 			-o ${output}/${i}
-			
-		if [[ ${binarize} == true ]]; then
-			echo "binarize and fill holes"
-			fslmaths ${output}/${i} -bin -fillh ${output}/${i}
-		fi
+	fi
+
+	if [[ ${binarize} == true ]]; then
+		echo "binarize and fill holes"
+		fslmaths ${output}/${i} -bin -fillh ${output}/${i}
 	fi
 done
 
@@ -209,7 +107,6 @@ done
 [ ! -f ${output}/${roi_files[0]} ] && echo "failed" && exit 1 || echo "passed"
 if [ -f ./fnirt_config.cnf ]; then
 	mv *.nii.gz ${outdir}/
-	mv fnirt_config.cnf ${outdir}/
 	mv *.txt ${outdir}/
 	mv *.mat ${outdir}/
 fi
