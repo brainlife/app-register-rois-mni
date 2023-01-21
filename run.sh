@@ -30,7 +30,11 @@ output='./rois/rois/'
 [[ ${input_type} == 'T1' ]] && output_type='t1' || output_type='t2'
 if [[ ${warp_to_use} == 'warp' ]]; then
 	warp_file=${warp}
-	premat_line="--premat=$(eval "echo $affine")"
+	if [[ ${acpc_or_input} == 'input' ]]; then
+		premat_line="--premat=$(eval "echo $affine")"
+	else
+		premat_line=""
+	fi
 else
 	warp_file=${inv_warp}
 	premat_line=""
