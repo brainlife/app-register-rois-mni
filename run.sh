@@ -26,12 +26,6 @@ output='./rois/rois/'
 
 [ ! -d ${outdir} ] && mkdir ${outdir}
 
-## making output directories
-for DIRS in ${acpcdir} ${standard_nonlin_warp}
-do
-	mkdir ${DIRS}
-done
-
 ## set if conditions
 [[ ${input_type} == 'T1' ]] && output_type='t1' || output_type='t2'
 if [[ ${warp_to_use} == 'warp' ]]; then
@@ -87,7 +81,7 @@ do
 	i=${i##*/}
 	roi_to_warp=${rois}/${i}
     
-    if [ ! -f ${output}/${i} ]; then
+	if [ ! -f ${output}/${i} ]; then
 		applywarp \
 			--rel \
 			--interp=${interp} \
