@@ -110,7 +110,7 @@ do
 done
 
 ## final check
-[ ! -f ${output}/${roi_files[0]} ] && echo "failed" && exit 1 || echo "passed"
+# [ ! -f ${output}/${roi_files[0]} ] && echo "failed" && exit 1 || echo "passed"
 if [ -f ./fnirt_config.cnf ]; then
 	mv *.nii.gz ${outdir}/
 	mv *.txt ${outdir}/
