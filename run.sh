@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+#set -x
 
 ## input parameters
 input=`jq -r '.input' config.json`
@@ -11,8 +11,8 @@ interp=`jq -r '.interp' config.json`
 warp=`jq -r '.warp' config.json`
 inv_warp=`jq -r '.inverse_warp' config.json`
 affine=`jq -r '.affine' config.json`
-roi_files=$(ls ${rois})
 tempdir='tmp'
+roi_files=$(find ${rois}/*)
 acpcdir='acpc'
 standard_nonlin_warp='standard_nonlin_warp'
 warp_to_use=`jq -r '.warp_to_use' config.json`
@@ -39,10 +39,10 @@ if [[ ${warp_to_use} == 'warp' ]]; then
 	premat_line="--premat=$(eval "echo $affine")"
 else
 	warp_file=${inv_warp}
+	premat_line=""
 	if [[ ${acpc_or_input} == 'input' ]]; then
-		premat_line="--premat=$(eval "echo $affine")"
-	else
-		premat_line=''
+		[ ! -f ./affine_inverse.mat ] && echo "computing inverse affine" && convert_xfm -omat ./affine_inverse.mat ${affine} -inverse
+		affine="affine_inverse.mat"
 	fi
 fi
 
@@ -84,6 +84,7 @@ esac
 echo "apply fnirt warp"
 for i in ${roi_files[*]}
 do
+	i=${i##*/}
 	roi_to_warp=${rois}/${i}
     
     if [ ! -f ${output}/${i} ]; then
@@ -100,6 +101,15 @@ do
 	if [[ ${binarize} == true ]]; then
 		echo "binarize and fill holes"
 		fslmaths ${output}/${i} -bin -fillh ${output}/${i}
+	fi
+
+	if [[ ${acpc_or_input} == 'input' ]] && [[ ${warp_to_use} == "inv_warp" ]]; then
+		applywarp --rel \
+			--interp=${interp} \
+			-i ${output}/${i} \
+			-r ${input} \
+			--premat=${affine} \
+			-o ${output}/${i}
 	fi
 done
 
