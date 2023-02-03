@@ -94,5 +94,5 @@ do
 done
 
 ## final check
-[ ! -f ${output}/${roi_files[0]} ] && echo "failed" && exit 1 || echo "passed" && mv *.nii.gz ${outdir}/ && mv fnirt_config.cnf ${outdir}/ && mv *.txt ${outdir}/ && mv *.mat ${outdir}/
+[ ! -f ${output}/${i} ] && echo "failed" && exit 1 || echo "passed" && mv *.nii.gz ${outdir}/ && mv fnirt_config.cnf ${outdir}/ && mv *.txt ${outdir}/ && mv *.mat ${outdir}/
 
