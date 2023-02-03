@@ -1,21 +1,17 @@
 #!/bin/bash
 
-#set -x
+set -x
 
 ## input parameters
-input=`jq -r '.input' config.json`
-rois=`jq -r '.rois' config.json`
-TEMPLATE=`jq -r '.template' config.json`
-input_type=`jq -r '.input_type' config.json`
-interp=`jq -r '.interp' config.json`
-warp=`jq -r '.warp' config.json`
-inv_warp=`jq -r '.inverse_warp' config.json`
-affine=`jq -r '.affine' config.json`
+input=`jq -r '.t1' config.json`
+TEMPLATE="MNI152_2mm"
+input_type='T1'
+interp="nn"
+rois="template_rois"
+roi_files=$(find ${rois}/*.nii.gz)
+roi_files=($roi_files)
 tempdir='tmp'
-roi_files=$(find ${rois}/*)
-warp_to_use=`jq -r '.warp_to_use' config.json`
-binarize=`jq -r '.binarize' config.json`
-acpc_or_input=`jq -r '.acpc_or_input' config.json`
+warp_to_use="inv_warp"
 outdir='raw'
 
 ## make output directories
@@ -25,94 +21,78 @@ output='./rois/rois/'
 [ ! -d ${outdir} ] && mkdir ${outdir}
 
 ## set if conditions
-[[ ${input_type} == 'T1' ]] && output_type='t1' || output_type='t2'
-if [[ ${warp_to_use} == 'warp' ]]; then
-	warp_file=${warp}
-	if [[ ${acpc_or_input} == 'input' ]]; then
-		premat_line="--premat=$(eval "echo $affine")"
-	else
-		premat_line=""
-	fi
-else
-	warp_file=${inv_warp}
-	premat_line=""
-	if [[ ${acpc_or_input} == 'input' ]]; then
-		[ ! -f ./affine_inverse.mat ] && echo "computing inverse affine" && convert_xfm -omat ./affine_inverse.mat ${affine} -inverse
-		affine="affine_inverse.mat"
-	fi
-fi
+[[ ${input_type} == 'T1' ]] && output_type='t1'
+
+warp_file="inverse-warp.nii.gz"
+premat_line=''
 
 ## set template for alignment
-case $TEMPLATE in
-nihpd_asym*)
-	space="NIHPD"
-	[ $input_type == "T1" ] && template=templates/${TEMPLATE}_t1w.nii
-	[ $input_type == "T2" ] && template=templates/${TEMPLATE}_t2w.nii
-	template_mask=templates/${template}_mask.nii
-	;;
-MNI152_1mm)
-	space="MNI152_1mm"
-	[ $input_type == "T1" ] && template=templates/MNI152_T1_1mm.nii.gz
-	[ $input_type == "T2" ] && template=templates/MNI152_T2_1mm.nii.gz
-	template_mask=templates/MNI152_T1_1mm_brain_mask.nii.gz
-	;;
-MNI152_0.7mm)
-	space="MNI152_0.7mm"
-	[ $input_type == "T1" ] && template=templates/MNI152_T1_0.7mm.nii.gz
-	[ $input_type == "T2" ] && template=templates/MNI152_T2_0.7mm.nii.gz
-	template_mask=templates/MNI152_T1_0.7mm_brain_mask.nii.gz
-	;;
-MNI152_0.8mm)
-	space="MNI152_0.8mm"
-	[ $input_type == "T1" ] && template=templates/MNI152_T1_0.8mm.nii.gz
-	[ $input_type == "T2" ] && template=templates/MNI152_T2_0.8mm.nii.gz
-	template_mask=templates/MNI152_T1_0.8mm_brain_mask.nii.gz
-	;;
-MNI152_2mm)
-	space="MNI152_2mm"
-	[ $input_type == "T1" ] && template=templates/MNI152_T1_2mm.nii.gz
-	[ $input_type == "T2" ] && template=templates/MNI152_T2_2mm.nii.gz
-	template_mask=templates/MNI152_T1_2mm_brain_mask.nii.gz
-	;;
-esac
+space="MNI152_2mm"
+[ $input_type == "T1" ] && template=templates/MNI152_T1_2mm.nii.gz
+template_mask=templates/MNI152_T1_2mm_brain_mask.nii.gz
+
+## make config file for fnirt
+cp -v ./templates/fnirt_config.cnf ./
+sed -i "/--ref=/s/$/${TEMPLATE}/" ./fnirt_config.cnf
+sed -i "/--refmask=/s/$/${TEMPLATE}_mask_dil1/" ./fnirt_config.cnf
+
+## align input to template of choice
+# flirt
+[ ! -f ${input_type}_to_standard_lin.nii.gz ] && echo  "flirt linear alignment" && flirt -interp spline \
+	-dof 12 -in ${input} \
+	-ref ${template} \
+	-omat ${input_type}_to_standard_lin.mat \
+	-out ${input_type}_to_standard_lin \
+	-searchrx -30 30 -searchry -30 30 -searchrz -30 30
+
+# dilate and fill holes in template brain mask
+[ ! -f ${TEMPLATE}_mask_dil1.nii.gz ] && fslmaths \
+	${template_mask} \
+	-fillh \
+	-dilF ${TEMPLATE}_mask_dil1
+
+# fnirt
+[ ! -f ./${input_type}_to_standard_nonlin.nii.gz ] && echo  "fnirt nonlinear alignment" && fnirt \
+	--in=./${input_type}_to_standard_lin.nii.gz \
+	--ref=${template} \
+	--fout=${input_type}_to_standard_nonlin_field \
+	--jout=${input_type}_to_standard_nonlin_jac \
+	--iout=${input_type}_to_standard_nonlin \
+	--logout=${input_type}_to_standard_nonlin.txt \
+	--cout=${input_type}_to_standard_nonlin_coeff \
+	--config=./fnirt_config.cnf \
+	--aff=${input_type}_to_standard_lin.mat \
+	--refmask=${TEMPLATE}_mask_dil1.nii.gz
+
+# compute inverse warp
+[ ! -f ./standard_to_${input_type}_nonlin_field.nii.gz ] && echo  "compute inverse warp" && invwarp \
+	-r ${template} \
+	-w ${input_type}_to_standard_nonlin_coeff \
+	-o standard_to_${input_type}_nonlin_field
+
+warp_file=./standard_to_${input_type}_nonlin_field.nii.gz
 
 ## warp rois
 echo "apply fnirt warp"
 for i in ${roi_files[*]}
 do
-	i=${i##*/}
+	i=${i##${rois}/}
 	roi_to_warp=${rois}/${i}
     
-	if [ ! -f ${output}/${i} ]; then
+    if [ ! -f ${output}/${i} ]; then
 		applywarp \
 			--rel \
 			--interp=${interp} \
 			-i ${roi_to_warp} \
-			-r ${template} \
-			${premat_line} \
+			-r ${input} \
 			-w ${warp_file} \
 			-o ${output}/${i}
-	fi
 
-	if [[ ${binarize} == true ]]; then
 		echo "binarize and fill holes"
 		fslmaths ${output}/${i} -bin -fillh ${output}/${i}
-	fi
-
-	if [[ ${acpc_or_input} == 'input' ]] && [[ ${warp_to_use} == "inv_warp" ]]; then
-		applywarp --rel \
-			--interp=${interp} \
-			-i ${output}/${i} \
-			-r ${input} \
-			--premat=${affine} \
-			-o ${output}/${i}
 	fi
 done
 
 ## final check
-# [ ! -f ${output}/${roi_files[0]} ] && echo "failed" && exit 1 || echo "passed"
-if [ -f ./fnirt_config.cnf ]; then
-	mv *.nii.gz ${outdir}/
-	mv *.txt ${outdir}/
-	mv *.mat ${outdir}/
-fi
+[ ! -f ${output}/${roi_files[0]} ] && echo "failed" && exit 1 || echo "passed" && mv *.nii.gz ${outdir}/ && mv fnirt_config.cnf ${outdir}/ && mv *.txt ${outdir}/ && mv *.mat ${outdir}/
+

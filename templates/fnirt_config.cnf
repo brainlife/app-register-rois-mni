@@ -42,4 +42,3 @@
 --biaslambda=10000
 #       If =1, ref image is used to calculate derivatives. Default =0
 --refderiv=0
-
