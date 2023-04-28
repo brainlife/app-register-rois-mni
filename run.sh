@@ -18,6 +18,11 @@ binarize=`jq -r '.binarize' config.json`
 acpc_or_input=`jq -r '.acpc_or_input' config.json`
 outdir='raw'
 
+# copy rois
+[ ! -d tmp ] && cp -LR ${rois}/* ./tmp/
+rois=./tmp/
+roi_files=$(find ${rois}/*)
+
 ## make output directories
 [ ! -d rois ] && mkdir rois rois/rois
 output='./rois/rois/'
