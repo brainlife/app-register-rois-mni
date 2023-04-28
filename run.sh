@@ -19,7 +19,7 @@ acpc_or_input=`jq -r '.acpc_or_input' config.json`
 outdir='raw'
 
 # copy rois
-[ ! -d tmp ] && cp -LR ${rois}/* ./tmp/
+[ ! -d tmp ] && mkdir tmp && cp -LR ${rois}/* ./tmp/
 rois=./tmp/
 roi_files=$(find ${rois}/*)
 
