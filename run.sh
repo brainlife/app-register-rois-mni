@@ -75,6 +75,18 @@ MNI152_2mm)
 	[ $input_type == "T2" ] && template=templates/MNI152_T2_2mm.nii.gz
 	template_mask=templates/MNI152_T1_2mm_brain_mask.nii.gz
 	;;
+tpl-MNI152NLin2009cAsym_res-01)
+	space="tpl-MNI152NLin2009cAsym_res-01"
+	[ $input_type == "T1" ] && template=templates/tpl-MNI152NLin2009cAsym_res-01_T1w.nii.gz
+	[ $input_type == "T2" ] && template=templates/tpl-MNI152NLin2009cAsym_res-01_T2w.nii.gz
+	template_mask=templates/tpl-MNI152NLin2009cAsym_res-01_desc-brain_mask.nii.gz
+	;;
+tpl-MNI152NLin2009cAsym_res-02)
+	space="tpl-MNI152NLin2009cAsym_res-02"
+	[ $input_type == "T1" ] && template=templates/tpl-MNI152NLin2009cAsym_res-02_T1w.nii.gz
+	[ $input_type == "T2" ] && template=templates/tpl-MNI152NLin2009cAsym_res-02_T2w.nii.gz
+	template_mask=templates/tpl-MNI152NLin2009cAsym_res-02_desc-brain_mask.nii.gz
+	;;
 esac
 
 ## if warp does not exist, perform alignment. else, just applywarp
