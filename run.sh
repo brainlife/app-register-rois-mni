@@ -4,7 +4,7 @@
 
 ## input parameters
 input=`jq -r '.input' config.json`
-rois=`jq -r '.rois' config.json`
+rois=`jq -r '.bundles' config.json`
 TEMPLATE=`jq -r '.template' config.json`
 input_type=`jq -r '.input_type' config.json`
 interp=`jq -r '.interp' config.json`
@@ -24,8 +24,8 @@ rois=./tmp/
 roi_files=$(find ${rois}/*)
 
 ## make output directories
-[ ! -d rois ] && mkdir rois rois/rois
-output='./rois/rois/'
+[ ! -d rois ] && mkdir masks masks/masks
+output='./masks/masks/'
 
 [ ! -d ${outdir} ] && mkdir ${outdir}
 
